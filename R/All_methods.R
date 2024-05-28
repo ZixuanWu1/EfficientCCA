@@ -506,6 +506,46 @@ additional_checks <- function(X_train, Y_train, S=NULL,
     
     
   }
+  
+
   a_estimate <- gca_to_cca(a_estimate, S, pp)
   return(a_estimate)
 }
+
+
+
+GCA_checks <- function(example){
+  p1 = dim(example$X)[2]
+  p2 = dim(example$Y)[2]
+  p = p1+ p2
+  n = dim(example$X)[1]
+  
+  max1 = 500 * sqrt(log(p1)/n)
+  min1 = 0.001 * sqrt(log(p1)/n) 
+  param1 = exp(seq(log(min1), log(max1), length.out=20))
+  maxk = 0.25 * p
+  mink = 0.01 * p 
+  param2 = ceiling(seq(max(ceiling(mink),5), ceiling(maxk), length.out = 10))
+  fantope_solution = NULL
+  
+  res_tg <- pipeline_thresholded_gradient(example$Data, example$Mask, 
+                                          example$sigma0hat, 
+                                          r=r, nu=1,
+                                          Sigmax=example$Sigmax, 
+                                          Sigmay=example$Sigmay, 
+                                          maxiter.init=100, 
+                                          lambda=NULL,k=NULL,
+                                          kfolds=5, maxiter=2000, 
+                                          convergence=1e-3, eta=1e-3,
+                                          param1=param1,
+                                          param2=param2, normalize=T,
+                                          criterion= "prediction",
+                                          fantope_solution=fantope_solution)
+  Uhat = rbind(res_tg$ufinal, res_tg$vfinal)
+  Uhat2 = rbind(res_tg$initu, res_tg$initv)  
+}
+
+  
+  
+
+
