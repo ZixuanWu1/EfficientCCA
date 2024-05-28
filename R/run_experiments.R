@@ -44,8 +44,7 @@ name_exp <- args[2]
 set.seed(seed)
 n <- as.numeric(args[3])
 p <- as.numeric(args[4])
-q = as.numeric(args[5])
-
+q = p
 
 r_pca = 5
 
