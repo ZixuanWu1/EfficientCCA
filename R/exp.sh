@@ -3,13 +3,11 @@
 #SBATCH --output=EfficientCCA/logs/array_missing_%A_%a.out
 #SBATCH --error=EfficientCCA/logs/array_missing_%A_%a.err
 #SBATCH --array=1-10
-#SBATCH --time=40:00:00
-#SBATCH --partition=cdonnat
-#SBATCH --mem=6G
+#SBATCH --time=35:00:00
+#SBATCH --partition=caslake
+#SBATCH --ntasks=1
+#SBATCH --mem=5G
 #SBATCH --account=pi-cdonnat
-#SBATCH --AllowAccounts=pi-cdonnat
-#SBATCH --AllowQos=cdonnat
-#SBATCH --nodes=midway3-0[419-421]
 
 echo "My SLURM_ARRAY_TASK_ID: " $SLURM_ARRAY_TASK_ID
 echo "My SLURM_ARRAY_JOB_ID: " $SLURM_ARRAY_JOB_ID

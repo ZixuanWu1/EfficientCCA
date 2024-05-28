@@ -4,6 +4,7 @@ library(doParallel)
 registerDoParallel(makeCluster(8))
 library(SMUT)
 
+
 soft_thresh <- function(A, lambda){
   result = sign(A) * pmax(abs(A) - lambda, 0)
   return(result)

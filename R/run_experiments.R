@@ -11,31 +11,29 @@ library(PMA)
 library(mvtnorm)
 library(glmnet)
 library(caret)
+
 #Example of TGD on Sparse CCA
 #n = 500, p1 = p2 = 100, s_u = s_v = 5
 #k = 20, eta = 0.0025, lambda =0.01, T = 12000
-setwd("/Users/zixuanwu/Documents/GitHub/cca_grouo_lasso/EfficientCCA/R")
-wd = getwd()
-setwd("/Users/zixuanwu/Documents/GitHub/cca_grouo_lasso/EfficientCCA/R/GCA")
-source("utils.R")
-source("gca_to_cca.R")
-source("init_process.R")
-source("sgca_init.R")
-source("sgca_tgd.R")
-source("subdistance.R")
-source("adaptive_lasso.R")
 
-setwd(wd)
-source('alternative_methods/SAR.R')
-source('alternative_methods/Parkhomenko.R')
-source('alternative_methods/Witten_CrossValidation.R')
-source('alternative_methods/Waaijenborg.R')
+source("EfficientCCA/R/GCA/utils.R")
+source("EfficientCCA/R/GCA/gca_to_cca.R")
+source("EfficientCCA/R/GCA/init_process.R")
+source("EfficientCCA/R/GCA/sgca_init.R")
+source("EfficientCCA/R/GCA/sgca_tgd.R")
+source("EfficientCCA/R/GCA/subdistance.R")
+source("EfficientCCA/R/GCA/adaptive_lasso.R")
 
-source("generate_examples.R")
-source("evaluate_results.r")
-source("EfficientCCA.R")
-source("All_methods.R")
+source('EfficientCCA/R/alternative_methods/SAR.R')
+source('EfficientCCA/R/alternative_methods/Parkhomenko.R')
+source('EfficientCCA/R/alternative_methods/Witten_CrossValidation.R')
+source('EfficientCCA/R/alternative_methods/Waaijenborg.R')
 
+source("EfficientCCA/R/generate_examples.R")
+source("EfficientCCA/R/evaluate_results.R")
+source("EfficientCCA/R/EfficientCCA.R")
+source("EfficientCCA/R/All_methods.R")
+source("EfficientCCA/R/metrics.R")
 
 
 args <- commandArgs(trailingOnly=TRUE)
@@ -56,7 +54,7 @@ t2 = NULL
 
 output = NULL
 
-for(nnzeros in (p * c(0.01, 0.025, 0.05))){
+for(nnzeros in c(15)){
 for(strength_theta in c("strong", "medium", "weak")){
   if (strength_theta == "strong"){
     theta = diag(c(.9, .8))
@@ -178,5 +176,6 @@ tryCatch({
 }
 
 output$time = t2- t1
-write_excel_csv(output, paste0("cca_experiments/results/", name_exp, "_", ".csv"))
+
+write_excel_csv(output, paste0("EfficientCCA/results/", name_exp, "_", ".csv"))
 
