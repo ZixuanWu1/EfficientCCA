@@ -4,7 +4,7 @@ library(MASS)
 library(pls)
 library(CCA)
 
-source("src/metrics.R")
+source("metrics.R")
 
 SparseCCA <- function(X, Y, lambdaAseq=seq(from=1, to=0.01, by=-0.01),
                     lambdaBseq=seq(from=1, to=0.01, by=-0.01),

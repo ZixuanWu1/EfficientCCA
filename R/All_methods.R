@@ -1,36 +1,4 @@
-library(MASS)
-library(stats)
-library(CVXR)
-library(geigen)
-library(pracma)
-library(tidyverse)
-library(CCA)
-library(VGAM)
-library(matlib)
-library(PMA)
-library(mvtnorm)
-library(glmnet)
-library(caret)
-#Example of TGD on Sparse CCA
-#n = 500, p1 = p2 = 100, s_u = s_v = 5
-#k = 20, eta = 0.0025, lambda =0.01, T = 12000
-wd = getwd()
-setwd("experiments/alternative_methods/GCA")
-source("utils.R")
-source("gca_to_cca.R")
-source("init_process.R")
-source("sgca_init.R")
-source("sgca_tgd.R")
-source("subdistance.R")
-source("adaptive_lasso.R")
 
-setwd(wd)
-source('experiments/alternative_methods/SAR.R')
-source('experiments/alternative_methods/Parkhomenko.R')
-source('experiments/alternative_methods/Witten_CrossValidation.R')
-source('experiments/alternative_methods/Waaijenborg.R')
-
-setwd(wd)
 
 cv_function <- function(X, Y, 
                         kfolds=10, initu, initv,
@@ -213,6 +181,9 @@ pipeline_adaptive_lasso <- function(Data, Mask, sigma0hat, r, nu=1, Sigmax,
     sigma0hat1 <- sigma0hat
   }
   
+  t1 = NULL
+  t2 = NULL
+  
   if (init == "Fantope"){
     if (is.null(fantope_solution)){
       ag <- sgca_init(A=S1, B=sigma0hat1, rho=0.5 * sqrt(log(p)/dim(X)[1]),
@@ -286,6 +257,7 @@ pipeline_alternating_lasso <- function(Data, Mask, sigma0hat, r, nu=1, Sigmax,
                                        create_folds=TRUE, init ="Fantope", normalize=FALSE, alpha=0.5,
                                        criterion="prediction",
                                        fantope_solution=NULL){
+
   
   ### Replaces the initialization step by an rcc
   p1 <- dim(Sigmax)[1]
@@ -368,10 +340,14 @@ pipeline_thresholded_gradient <- function(Data, Mask, sigma0hat, r=2, nu=1, Sigm
   pp <- c(p1,p2);
   S = cov(Data)
   
+  t1 = NULL
+  t2 = NULL
   if (init == "Fantope"){
     if (is.null(fantope_solution)){
+      t1 = c(t1, Sys.time())
       ag <- sgca_init(A=S, B=sigma0hat, rho=0.5 * sqrt(log(p)/n),
                       K=r ,nu=nu,trace=FALSE, maxiter = maxiter) ###needs to be changed to be a little more scalable
+      t2 = c(t2, Sys.time())
       ainit <- init_process(ag$Pi, r) 
     }else{
       ainit <- fantope_solution
@@ -411,13 +387,17 @@ pipeline_thresholded_gradient <- function(Data, Mask, sigma0hat, r=2, nu=1, Sigm
   final <- sgca_tgd(A=S, B=sigma0hat,
                     r=r, ainit,k=k, lambda = lambda, eta=eta,convergence=convergence,
                     maxiter=maxiter, plot=FALSE)
+  t1 = c(t1, t1)
+  t2 = c(t2, Sys.time())
   a_estimate <- gca_to_cca(final, S, pp)
   return(list( ufinal = a_estimate$u, vfinal = a_estimate$v,
                initu=init$u, initv=init$v,
                final=final,
                lambda=lambda, 
                k=k,
-               resultsx=resultsx
+               resultsx=resultsx,
+               t1 = t1,
+               t2 = t2
   ))
   
 }
@@ -440,8 +420,8 @@ additional_checks <- function(X_train, Y_train, S=NULL,
   
   if (method.type=="FIT_SAR_BIC"){
     method<-SparseCCA(X=X_train,Y=Y_train,rank=rank,
-                      lambdaAseq=lambdax,
-                      lambdaBseq=lambday,
+                      lambdaAseq=seq(from=0.2,to=0.02,length=10),
+                      lambdaBseq=seq(from=0.2,to=0.02,length=10),
                       max.iter=100,conv=10^-2,
                       selection.criterion=1,n.cv=5)
     a_estimate = rbind(method$uhat, method$vhat)
@@ -449,8 +429,8 @@ additional_checks <- function(X_train, Y_train, S=NULL,
   }
   if(method.type=="FIT_SAR_CV"){
     method<-SparseCCA(X=X_train,Y=Y_train,rank=rank,
-                      lambdaAseq=lambdax,
-                      lambdaBseq=lambday,
+                      lambdaAseq=seq(from=0.2,to=0.02,length=10),
+                      lambdaBseq=seq(from=0.2,to=0.02,length=10),
                       max.iter=100,conv=10^-2, selection.criterion=2, n.cv=5)
     a_estimate = rbind(method$uhat, method$vhat)
     
@@ -458,16 +438,16 @@ additional_checks <- function(X_train, Y_train, S=NULL,
   if (method.type=="Witten_Perm"){
     Witten_Perm <- CCA.permute(x=X_train,z=Y_train,
                                typex="standard",typez="standard", 
-                               penaltyxs =lambdax[which(lambdax < 1)],
-                               penaltyzs = lambday[which(lambday < 1)],
+                               penaltyxs =matrix(seq(from=0,to=1,length=20),nrow=1),
+                               penaltyzs = matrix(seq(from=0,to=1,length=20),nrow=1),
                                nperms=50)
     method<-CCA(x=X_train, z=Y_train, typex="standard",typez="standard",K=rank,
                 penaltyx=Witten_Perm$bestpenaltyx,penaltyz=Witten_Perm$bestpenaltyz,trace=FALSE)
     a_estimate = rbind(method$u, method$v)
   }
   if(method.type=="Witten.CV"){
-    Witten_CV<-Witten.CV(X=X_train,Y=Y_train, n.cv=5,lambdax=lambdax[which(lambdax < 1)],
-                         lambday=c(lambday[which(lambday < 1)]))
+    Witten_CV<-Witten.CV(X=X_train,Y=Y_train, n.cv=5,lambdax=matrix(seq(from=0,to=1,length=20),nrow=1),
+                         lambday=matrix(seq(from=0,to=1,length=20),nrow=1))
     method <-CCA(x=X_train,z=Y_train,typex="standard",typez="standard",
                  K=rank,penaltyx=Witten_CV$lambdax.opt,
                  penaltyz=Witten_CV$lambday.opt,trace=FALSE)
@@ -476,31 +456,31 @@ additional_checks <- function(X_train, Y_train, S=NULL,
   }
   if(method.type=="Waaijenborg-Author"){
     method<-Waaijenborg(X=X_train,Y=Y_train,
-                        lambdaxseq=lambdax,
-                        lambdayseq=lambday,
+                        lambdaxseq=matrix(seq(from=0.1,to=5,length=50),nrow=1),
+                        lambdayseq=matrix(seq(from=0.1,to=5,length=50),nrow=1),
                         rank=rank,selection.criterion=1)
     a_estimate = rbind(method$vhat, method$uhat)
     
   }
   if(method.type=="Waaijenborg-CV"){
     method<-Waaijenborg(X=X_train,
-                        Y=Y_train,lambdaxseq=lambdax,
-                        lambdayseq=lambday,
+                        Y=Y_train,lambdaxseq=matrix(seq(from=0.1,to=5,length=50),nrow=1),
+                        lambdayseq=matrix(seq(from=0.1,to=5,length=50),nrow=1),
                         rank=rank, selection.criterion=2)
     a_estimate = rbind(method$vhat, method$uhat)
     
   }
   if(method.type=="SCCA_Parkhomenko"){
     method<- SCCA_Parkhomenko(x.data=X_train, y.data=Y_train, Krank=rank,
-                              lambda.v.seq = lambdax[which(lambdax < 2)],
-                              lambda.u.seq = lambday[which(lambday < 2)])
+                              lambda.v.seq = matrix(seq(from=0,to=2,length=20),nrow=1),
+                              lambda.u.seq = matrix(seq(from=0,to=2,length=20),nrow=1))
     a_estimate = rbind(method$uhat, method$vhat)
     
   }
   if(method.type=="Canonical Ridge-Author"){
     RCC_cv<-estim.regul_crossvalidation(X_train,Y_train,n.cv=5, 
-                                        lambda1grid=lambdax[which(lambdax < 1)],
-                                        lambda2grid=lambday[which(lambdax < 1)])
+                                        lambda1grid=matrix(seq(from=0,to=1,length=20),nrow=1),
+                                        lambda2grid=matrix(seq(from=0,to=1,length=20),nrow=1))
     method<-rcc(X_train,Y_train, RCC_cv$lambda1.optim, RCC_cv$lambda2.optim)
     a_estimate = rbind(method$xcoef[,1:rank], method$ycoef[,1:rank])
     
@@ -514,11 +494,12 @@ additional_checks <- function(X_train, Y_train, S=NULL,
 
 
 
-GCA_checks <- function(example){
+GCA_checks <- function(example, r){
   p1 = dim(example$X)[2]
   p2 = dim(example$Y)[2]
   p = p1+ p2
   n = dim(example$X)[1]
+  pp = c(p1,p2)
   
   max1 = 500 * sqrt(log(p1)/n)
   min1 = 0.001 * sqrt(log(p1)/n) 
@@ -540,9 +521,12 @@ GCA_checks <- function(example){
                                           param1=param1,
                                           param2=param2, normalize=T,
                                           criterion= "prediction",
-                                          fantope_solution=fantope_solution)
-  Uhat = rbind(res_tg$ufinal, res_tg$vfinal)
-  Uhat2 = rbind(res_tg$initu, res_tg$initv)  
+                                          fantope_solution=NULL)
+  
+  Fantope = list(u = res_tg$initu,v =  res_tg$initv)  
+  GCA =   list(u = res_tg$ufinal, v = res_tg$vfinal)
+  
+  return(list(fantope = Fantope, gca = GCA, t1 = res_tg$t1, t2 = res_tg$t2))
 }
 
   
