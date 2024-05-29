@@ -105,7 +105,7 @@ lasso_cca_admm <- function(X, Y, lambda = 1, rho = 1, r = 2, niter = 500, B_init
 ##' 
 ##' @return C: U Lambda V^T
 ##' 
-cv_admm_lasso <- function(X, Y, rho = 1, lambda_max = .1, num_lambda = 10, r = 2, niter = 500,
+cv_admm_lasso <- function(X, Y, rho = 1, lambda_max = .2, num_lambda = 10, r = 2, niter = 500,
                           nfold = 8, B_init = NULL){
   p = dim(X)[2]
   q = dim(Y)[2]
@@ -168,7 +168,7 @@ cv_admm_lasso <- function(X, Y, rho = 1, lambda_max = .1, num_lambda = 10, r = 2
 ##' 
 ##' @return C: U Lambda V^T
 lasso_cca <- function(X, Y, lambda = NULL, rho = 1, r= 2, niter = 500,
-                      lambda_max = .1, num_lambda = 10, nfold = 8, one_sd = T, B_init = NULL){
+                      lambda_max = .1, num_lambda = 10, nfold = 8, one_sd = F, B_init = NULL){
   n = dim(X)[1]
   p = dim(X)[2]
   q = dim(Y)[2]
