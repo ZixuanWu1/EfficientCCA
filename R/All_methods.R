@@ -347,7 +347,6 @@ pipeline_thresholded_gradient <- function(Data, Mask, sigma0hat, r=2, nu=1, Sigm
       t1 = c(t1, Sys.time())
       ag <- sgca_init(A=S, B=sigma0hat, rho=0.5 * sqrt(log(p + q)/n),
                       K=2, trace=FALSE, fast = F) ###needs to be changed to be a little more scalable
-      t2 = c(t2, Sys.time())
       ainit <- init_process(ag$Pi, r) 
     }else{
       ainit <- fantope_solution
@@ -361,6 +360,8 @@ pipeline_thresholded_gradient <- function(Data, Mask, sigma0hat, r=2, nu=1, Sigm
   }
   
   init <- gca_to_cca(ainit, S, pp)
+  
+  t2 = c(t2, Sys.time())
   
   if (is.null(lambda) | is.null(k)){
     resultsx <- expand.grid(lambda = param1, k = param2) %>%
@@ -514,7 +515,7 @@ GCA_checks <- function(example, r){
                                           r=r, nu=1,
                                           Sigmax=example$Sigmax, 
                                           Sigmay=example$Sigmay, 
-                                          maxiter.init=100, 
+                                          maxiter.init=1000, 
                                           lambda=NULL,k=NULL,
                                           kfolds=5, maxiter=2000, 
                                           convergence=1e-3, eta=1e-3,
