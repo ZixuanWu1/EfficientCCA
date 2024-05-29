@@ -54,7 +54,7 @@ t2 = NULL
 
 output = NULL
 
-for(nnzeros in c(15)){
+nnzeros = 5
 for(strength_theta in c("strong", "medium", "weak")){
   if (strength_theta == "strong"){
     theta = diag(c(.9, .8))
@@ -173,7 +173,7 @@ tryCatch({
 
 }
 
-}
+
 
 output$time = t2- t1
 
