@@ -72,7 +72,9 @@ data = generate_example_none_trivial_pca(n, p, q, r_pca = r_pca, nnzeros = nnzer
                                          lambda_pca = 1)
 
 t1 = c(t1, Sys.time())
-result_admm1 = lasso_cca(data$X, data$Y)
+result_admm1 = lasso_cca(data$X, data$Y, lambda = 0.5 * sqrt(log(p + q)/n))
+
+
 
 t2 = c(t2, Sys.time())
 
@@ -80,7 +82,7 @@ t2 = c(t2, Sys.time())
 lasso_admm_dist<- evaluate_results(Uhat= result_admm1$U, 
                                    Vhat = result_admm1$V, 
                                    example = data, 
-                                   name_method="lasso", 
+                                   name_method="lasso_theory", 
                                    overlapping_amount=0,
                                    lambdax= NA,
                                    lambday = NA, 
@@ -89,6 +91,28 @@ lasso_admm_dist<- evaluate_results(Uhat= result_admm1$U,
                                    r_pca = r_pca, nnz= nnzeros,
                                    signal_strength= "strong")
 output = rbind(output,  lasso_admm_dist)
+
+
+t1 = c(t1, Sys.time())
+result_admm1 = lasso_cca(data$X, data$Y)
+
+t2 = c(t2, Sys.time())
+
+
+lasso_admm_dist<- evaluate_results(Uhat= result_admm1$U, 
+                                   Vhat = result_admm1$V, 
+                                   example = data, 
+                                   name_method="lasso_cv", 
+                                   overlapping_amount=0,
+                                   lambdax= NA,
+                                   lambday = NA, 
+                                   normalize_diagonal=T,
+                                   criterion="prediction",
+                                   r_pca = r_pca, nnz= nnzeros,
+                                   signal_strength= "strong")
+output = rbind(output,  lasso_admm_dist)
+
+
 
 methods <- c("FIT_SAR_BIC", "FIT_SAR_CV", 
              "Witten_Perm", "Witten.CV", "Waaijenborg-Author", "Waaijenborg-CV",
