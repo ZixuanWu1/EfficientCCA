@@ -42,6 +42,7 @@ name_exp <- args[2]
 set.seed(seed)
 n <- as.numeric(args[3])
 p <- as.numeric(args[4])
+nnzeros <- as.numeric(args[5])
 q = p
 
 r_pca = 5
@@ -54,7 +55,6 @@ t2 = NULL
 
 output = NULL
 
-nnzeros = 5
 for(strength_theta in c("strong", "medium", "weak")){
   if (strength_theta == "strong"){
     theta = diag(c(.9, .8))
