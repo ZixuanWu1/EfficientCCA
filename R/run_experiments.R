@@ -89,7 +89,7 @@ lasso_admm_dist<- evaluate_results(Uhat= result_admm1$U,
                                    normalize_diagonal=T,
                                    criterion="prediction",
                                    r_pca = r_pca, nnz= nnzeros,
-                                   signal_strength= "strong")
+                                   signal_strength= strength_theta)
 output = rbind(output,  lasso_admm_dist)
 
 
@@ -109,7 +109,7 @@ lasso_admm_dist<- evaluate_results(Uhat= result_admm1$U,
                                    normalize_diagonal=T,
                                    criterion="prediction",
                                    r_pca = r_pca, nnz= nnzeros,
-                                   signal_strength= "strong")
+                                   signal_strength= strength_theta)
 output = rbind(output,  lasso_admm_dist)
 
 
