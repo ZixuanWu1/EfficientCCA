@@ -326,7 +326,7 @@ pipeline_alternating_lasso <- function(Data, Mask, sigma0hat, r, nu=1, Sigmax,
 
 #(Sigma,Sigma0, lambda, rho, eta=0.001, nu=1,epsilon=5e-3,maxiter=1000,trace=FALSE)
 pipeline_thresholded_gradient <- function(Data, Mask, sigma0hat, r=2, nu=1, Sigmax, 
-                                          Sigmay, maxiter.init=30, 
+                                          Sigmay, maxiter.init=1000, 
                                           lambda=NULL, k=NULL, kfolds=5,
                                           maxiter=2000, convergence=1e-3, eta=1e-3,
                                           param1=10^(seq(-4, 1, by = 1)),
@@ -346,7 +346,7 @@ pipeline_thresholded_gradient <- function(Data, Mask, sigma0hat, r=2, nu=1, Sigm
     if (is.null(fantope_solution)){
       t1 = c(t1, Sys.time())
       ag <- sgca_init(A=S, B=sigma0hat, rho=0.5 * sqrt(log(p + q)/n),
-                      K=2, trace=FALSE, fast = F) ###needs to be changed to be a little more scalable
+                      K=2,  maxiter=2000, trace=FALSE, fast = F, ) ###needs to be changed to be a little more scalable
       ainit <- init_process(ag$Pi, r) 
     }else{
       ainit <- fantope_solution
