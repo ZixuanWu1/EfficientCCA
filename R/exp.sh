@@ -3,6 +3,7 @@
 #SBATCH --output=EfficientCCA/logs/array_missing_%A_%a.out
 #SBATCH --error=EfficientCCA/logs/array_missing_%A_%a.err
 #SBATCH --array=1-10
+#SBATCH --nodes=1
 #SBATCH --time=48:00:00
 #SBATCH --partition=caslake
 #SBATCH --ntasks=1
