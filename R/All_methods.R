@@ -346,7 +346,7 @@ pipeline_thresholded_gradient <- function(Data, Mask, sigma0hat, r=2, nu=1, Sigm
     if (is.null(fantope_solution)){
       t1 = c(t1, Sys.time())
       ag <- sgca_init(A=S, B=sigma0hat, rho=0.5 * sqrt(log(p + q)/n),
-                      K=2,  maxiter=2000, trace=FALSE, fast = F, ) ###needs to be changed to be a little more scalable
+                      K=2,  maxiter=2000, trace=FALSE, fast = F) ###needs to be changed to be a little more scalable
       ainit <- init_process(ag$Pi, r) 
     }else{
       ainit <- fantope_solution
