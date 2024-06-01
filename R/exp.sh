@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #SBATCH --job-name=array
-#SBATCH --output=r/experiments/synthetic/logs/array_%A_%a.out
-#SBATCH --error=r/experiments/synthetic/logs/array_%A_%a.err
+#SBATCH --output=EfficientCCA/logs/array_missing_%A_%a.out
+#SBATCH --error=EfficientCCA/logs/array_missing_%A_%a.err
 #SBATCH --array=1-10
 #SBATCH --time=35:00:00
 #SBATCH --partition=caslake
