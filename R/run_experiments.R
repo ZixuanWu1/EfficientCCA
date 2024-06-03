@@ -57,13 +57,13 @@ output = NULL
 
 for(strength_theta in c("strong", "medium", "weak")){
   if (strength_theta == "strong"){
-    theta = diag(c(.9, .8))
+    theta = diag(c(.9, .9))
   }
   if (strength_theta == "medium"){
-    theta = diag(c(.7, .6))
+    theta = diag(c(.7, .7))
   }
   if (strength_theta == "weak"){
-    theta = diag(c(.5, .4))
+    theta = diag(c(.5, .5))
   }
   
 
