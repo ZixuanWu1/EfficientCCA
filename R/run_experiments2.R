@@ -203,5 +203,5 @@ for(strength_theta in c("strong", "medium", "weak")){
 
 output$time = t2- t1
 
-write_excel_csv(output, paste0("EfficientCCA/results/", name_exp, "_", ".csv"))
+write_excel_csv(output, paste0("EfficientCCA/results2/", name_exp, "_", ".csv"))
 
