@@ -230,7 +230,7 @@ generate_example_none_trivial_pca <- function(n, p1, p2,
   Mask[idx1, idx1] <- matrix(1, pp[1], pp[1])
   Mask[idx2, idx2] <- matrix(1, pp[2], pp[2])
   Sigma0 <- Sigma * Mask
-  S <- cov(Data)
+  S <- cov(Data[1:n, ])
   sigma0hat <- S * Mask
   # Generate ground truth canonical vectors
   Sigma_X_inv <- solve(Sigma[1:p1, 1:p1])
@@ -238,7 +238,7 @@ generate_example_none_trivial_pca <- function(n, p1, p2,
   GT = svd(Sigma_X_inv %*% Sigma[1:p1, (p1 + 1):p_tot] %*% Sigma_Y_inv, nu = r, nv = r)
   return(list(Sigma=Sigma, Sigma0=Sigma0,
               S = S, sigma0hat =  sigma0hat, Mask= Mask,
-              X=X, Y = Y, Data=Data, u=GT$u, v=GT$v,     Xnew = Xnew, Ynew=Ynew,
+              X=X, Y = Y, Data=Data[1:n, ], u=GT$u, v=GT$v,     Xnew = Xnew, Ynew=Ynew,
               Sigmax=Sigmax, Sigmay=Sigmay
   ))
 }
