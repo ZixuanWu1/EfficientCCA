@@ -3,7 +3,7 @@
 #SBATCH --job-name=array
 #SBATCH --output=EfficientCCA/logs/array_missing_%A_%a.out
 #SBATCH --error=EfficientCCA/logs/array_missing_%A_%a.err
-#SBATCH --array=1-30
+#SBATCH --array=1-25
 #SBATCH --time=35:00:00
 #SBATCH --partition=caslake
 #SBATCH --cpus-per-task=8
