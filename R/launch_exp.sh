@@ -2,8 +2,8 @@
 
 # Define the values for the variables
 
-n_values="600"
-p_values="400 500 600 700 800"
+n_values="400"
+p_values="200 400 600 800 1000"
 s_values="5 10 15"
 
 for n in $n_values; do
