@@ -1,15 +1,15 @@
 #!/bin/bash
-
 #SBATCH --job-name=array
 #SBATCH --output=EfficientCCA/logs/array_missing_%A_%a.out
 #SBATCH --error=EfficientCCA/logs/array_missing_%A_%a.err
 #SBATCH --array=1-25
-#SBATCH --time=35:00:00
-#SBATCH --partition=caslake
+#SBATCH --time=40:00:00
+#SBATCH --partition=cdonnat
 #SBATCH --cpus-per-task=8
 #SBATCH --ntasks=1
-#SBATCH --mem=5G
+#SBATCH --mem=6G
 #SBATCH --account=pi-cdonnat
+#SBATCH --qos=cdonnat
 
 
 echo "My SLURM_ARRAY_TASK_ID: " $SLURM_ARRAY_TASK_ID
