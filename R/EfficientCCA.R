@@ -78,15 +78,8 @@ lasso_cca_admm <- function(X, Y, lambda = 1, rho = 1, r = 2, niter = 500, B_init
   }
   
   
-  result = svd(Z)
-  
-  if(r > 1){
-    result =  eigenMapMatMult(eigenMapMatMult(result$u[, 1:r], diag(result$d[1:r])),  t(result$v[, 1:r])) 
-  }
-  else{
-    result = result$d[1] * outer(result$u[, 1], result$v[, 1])
-  }
-  return(list(result = result, eigen1 = eigen1, eigen2 = eigen2))
+
+  return(list(result = Z, eigen1 = eigen1, eigen2 = eigen2))
   
   
 }
