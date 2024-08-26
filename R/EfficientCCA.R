@@ -10,6 +10,12 @@ soft_thresh <- function(A, lambda){
   return(result)
 }
 
+soft_thresh2 <- function(A, lambda){
+  result = A * pmax(1 - lambda/(sqrt(sum(A^2))), 0)
+  return(result)
+}
+
+
 
 ##' Fit lasso problem via ADMM
 ##' 
@@ -21,7 +27,7 @@ soft_thresh <- function(A, lambda){
 ##' @param niter: max number of iterations
 ##' 
 ##' @return C: U Lambda V^T
-lasso_cca_admm <- function(X, Y, lambda = 1, rho = 1, r = 2, niter = 500, B_init = NULL){
+lasso_cca_admm <- function(X, Y, lambda = 1, rho = 1, r = 2, niter = 500, B_init = NULL, groups = NA){
   
   p = dim(X)[2]
   q = dim(Y)[2]
@@ -58,11 +64,18 @@ lasso_cca_admm <- function(X, Y, lambda = 1, rho = 1, r = 2, niter = 500, B_init
     
     
     # Update Z
-    
-    
     Z = B + U
     
-    Z = soft_thresh(Z, lambda/rho)
+    if (is.na(groups)){
+      
+      Z = soft_thresh(Z, lambda/rho)
+    }
+    else{
+      for (g in length(groups)){
+        Z[[g]] =  soft_thresh2(Z[[g]], lambda/rho)
+      }
+      
+    }
     
     # Update U
     
@@ -99,7 +112,7 @@ lasso_cca_admm <- function(X, Y, lambda = 1, rho = 1, r = 2, niter = 500, B_init
 ##' @return C: U Lambda V^T
 ##' 
 cv_admm_lasso <- function(X, Y, rho = 1, lambda_max = .2, num_lambda = 10, r = 2, niter = 500,
-                          nfold = 8, B_init = NULL){
+                          nfold = 8, B_init = NULL, groups = NA){
   p = dim(X)[2]
   q = dim(Y)[2]
   n = dim(X)[1]
@@ -127,7 +140,7 @@ cv_admm_lasso <- function(X, Y, rho = 1, lambda_max = .2, num_lambda = 10, r = 2
       train_indices <- setdiff(1:n, test_indices)
       
       ## Fit lasso model
-      B <- lasso_cca_admm(X[train_indices, ], Y[train_indices, ],  lambda, rho, r, niter, B_init)$result
+      B <- lasso_cca_admm(X[train_indices, ], Y[train_indices, ],  lambda, rho, r, niter, B_init, groups)$result
       
       (c(sum((X[test_indices, ] %*% B %*% t(Y[test_indices,]) / length(test_indices) -diag(length(test_indices))  )^2)))
       
@@ -161,7 +174,7 @@ cv_admm_lasso <- function(X, Y, rho = 1, lambda_max = .2, num_lambda = 10, r = 2
 ##' 
 ##' @return C: U Lambda V^T
 lasso_cca <- function(X, Y, lambda = NULL, rho = 1, r= 2, niter = 500,
-                      lambda_max = .2, num_lambda = 10, nfold = 8, one_sd = F, B_init = NULL){
+                      lambda_max = .2, num_lambda = 10, nfold = 8, one_sd = F, B_init = NULL, groups = NA){
   n = dim(X)[1]
   p = dim(X)[2]
   q = dim(Y)[2]
@@ -169,7 +182,7 @@ lasso_cca <- function(X, Y, lambda = NULL, rho = 1, r= 2, niter = 500,
   # select lambda via cv if not specified
   if(is.null(lambda)){
     cv_result = cv_admm_lasso(X, Y, rho,  lambda_max, num_lambda, r , niter = niter, nfold = nfold, 
-                              B_init = B_init)
+                              B_init = B_init, groups = groups)
     min_ind = which(cv_result$mse == min(cv_result$mse) )
     if(one_sd){
       lambda = max(cv_result$lambda[which( cv_result$mse <= cv_result$mse[min_ind] + cv_result$std[min_ind] )  ] )
@@ -180,7 +193,7 @@ lasso_cca <- function(X, Y, lambda = NULL, rho = 1, r= 2, niter = 500,
   
   print(lambda)
   # Fit lasso
-  B = lasso_cca_admm(X, Y, lambda, rho, r, niter, B_init)
+  B = lasso_cca_admm(X, Y, lambda, rho, r, niter, B_init, groups)
 
   # Convert result to CCA estimates
   
