@@ -66,7 +66,7 @@ lasso_cca_admm <- function(X, Y, lambda = 1, rho = 1, r = 2, niter = 500, B_init
     # Update Z
     Z = B + U
     
-    if (is.na(groups)){
+    if (all(is.na(groups))){
       
       Z = soft_thresh(Z, lambda/rho)
     }
@@ -133,6 +133,10 @@ cv_admm_lasso <- function(X, Y, rho = 1, lambda_max = .2, num_lambda = 10, r = 2
       
       soft_thresh <- function(A, lambda){
         result = sign(A) * pmax(abs(A) - lambda, 0)
+        return(result)
+      }
+      soft_thresh2 <- function(A, lambda){
+        result = A * pmax(1 - lambda/(sqrt(sum(A^2))), 0)
         return(result)
       }
       
