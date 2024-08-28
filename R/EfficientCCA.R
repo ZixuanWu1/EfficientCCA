@@ -11,6 +11,9 @@ soft_thresh <- function(A, lambda){
 }
 
 soft_thresh2 <- function(A, lambda){
+  if(sum(A^2) == 0){
+    return(A)
+  }
   result = A * pmax(1 - lambda/(sqrt(sum(A^2))), 0)
   return(result)
 }
