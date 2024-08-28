@@ -71,8 +71,8 @@ lasso_cca_admm <- function(X, Y, lambda = 1, rho = 1, r = 2, niter = 500, B_init
       Z = soft_thresh(Z, lambda/rho)
     }
     else{
-      for (g in length(groups)){
-        Z[[g]] =  soft_thresh2(Z[[g]], lambda/rho)
+      for (g in 1:length(groups)){
+        Z[groups[[g]] ] =  soft_thresh2(Z[groups[[g]] ], sqrt(length(groups[[g]]) ) * lambda/rho)
       }
       
     }
