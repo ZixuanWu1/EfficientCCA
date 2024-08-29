@@ -55,6 +55,11 @@ t2 = NULL
 
 output = NULL
 
+groups <- vector("list", length = (p / 5) * (q / 5))
+m <- 1
+
+
+
 # Groups
 indices_i <- rep(1:(p / 5), each = (q / 5))
 indices_j <- rep(1:(q / 5), times = (p / 5))
