@@ -98,64 +98,130 @@ for(strength_theta in c("strong", "medium", "weak")){
   tryCatch({
     temp1 = Sys.time()
     
-  result_admm1 = lasso_cca(data$X, data$Y, lambda = 0.5 * sqrt(log(p + q)/n),r = r, groups = groups)
-
-  temp2 = Sys.time()
-  
-  lasso_admm_dist<- evaluate_results(Uhat= result_admm1$U, 
-                                     Vhat = result_admm1$V, 
-                                     example = data, 
-                                     name_method="lasso_group_theory", 
-                                     overlapping_amount=0,
-                                     lambdax= NA,
-                                     lambday = NA, 
-                                     normalize_diagonal=T,
-                                     criterion="prediction",
-                                     r_pca = r_pca, nnz= nnzeros,
-                                     signal_strength= strength_theta)
-  
-  t1 = c(t1, temp1 )
-  
-  t2 = c(t2, temp2)
-  
-  output = rbind(output,  lasso_admm_dist)
-  
-  
+    result_admm1 = lasso_cca(data$X, data$Y, lambda = sqrt(log(p + q)/n))
+    
+    temp2 = Sys.time()
+    
+    lasso_admm_dist1<- evaluate_results(Uhat= result_admm1$U, 
+                                        Vhat = result_admm1$V, 
+                                        example = data, 
+                                        name_method="lasso_theory", 
+                                        overlapping_amount=0,
+                                        lambdax= NA,
+                                        lambday = NA, 
+                                        normalize_diagonal=T,
+                                        criterion="prediction",
+                                        r_pca = r_pca, nnz= nnzeros,
+                                        signal_strength= strength_theta)
+    
+    t1 = c(t1, temp1 )
+    
+    t2 = c(t2, temp2)
+    
+    output = rbind(output,  lasso_admm_dist1)
+    
+    
   }, error = function(e) {
     # Print the error message
     cat("Error occurred in alternative methods", ":", conditionMessage(e), "\n")
     # Skip to the next iteration
   })
   
-
+  
+  tryCatch({
+    temp1 = Sys.time()
+    
+    result_admm2 = lasso_cca(data$X, data$Y, lambda_max = .3)
+    
+    temp2 = Sys.time()
+    
+    lasso_admm_dist2<- evaluate_results(Uhat= result_admm2$U, 
+                                        Vhat = result_admm2$V, 
+                                        example = data, 
+                                        name_method="lasso_cv", 
+                                        overlapping_amount=0,
+                                        lambdax= NA,
+                                        lambday = NA, 
+                                        normalize_diagonal=T,
+                                        criterion="prediction",
+                                        r_pca = r_pca, nnz= nnzeros,
+                                        signal_strength= strength_theta)
+    
+    t1 = c(t1, temp1 )
+    
+    t2 = c(t2, temp2)
+    
+    output = rbind(output,  lasso_admm_dist2)
+    
+    
+  }, error = function(e) {
+    # Print the error message
+    cat("Error occurred in alternative methods", ":", conditionMessage(e), "\n")
+    # Skip to the next iteration
+  })
   
   
   tryCatch({
-  temp1 = Sys.time()
+    temp1 = Sys.time()
     
-  result_admm1 = lasso_cca(data$X, data$Y, r= r, groups = groups)
-  temp2 = Sys.time()
-
+    result_admm3 = lasso_cca(data$X, data$Y, lambda = 0.5 * sqrt(log(p + q)/n), groups = groups)
+    
+    temp2 = Sys.time()
+    
+    lasso_admm_dist3<- evaluate_results(Uhat= result_admm3$U, 
+                                        Vhat = result_admm3$V, 
+                                        example = data, 
+                                        name_method="lasso_group_theory", 
+                                        overlapping_amount=0,
+                                        lambdax= NA,
+                                        lambday = NA, 
+                                        normalize_diagonal=T,
+                                        criterion="prediction",
+                                        r_pca = r_pca, nnz= nnzeros,
+                                        signal_strength= strength_theta)
+    
+    t1 = c(t1, temp1 )
+    
+    t2 = c(t2, temp2)
+    
+    output = rbind(output,  lasso_admm_dist3)
+    
+    
+  }, error = function(e) {
+    # Print the error message
+    cat("Error occurred in alternative methods", ":", conditionMessage(e), "\n")
+    # Skip to the next iteration
+  })
   
-  lasso_admm_dist<- evaluate_results(Uhat= result_admm1$U, 
-                                     Vhat = result_admm1$V, 
-                                     example = data, 
-                                     name_method="lasso_group_cv", 
-                                     overlapping_amount=0,
-                                     lambdax= NA,
-                                     lambday = NA, 
-                                     normalize_diagonal=T,
-                                     criterion="prediction",
-                                     r_pca = r_pca, nnz= nnzeros,
-                                     signal_strength= strength_theta)
-  output = rbind(output,  lasso_admm_dist)
   
   
   
-  t1 = c(t1, temp1 )
-  
-  t2 = c(t2, temp2)
-  
+  tryCatch({
+    temp1 = Sys.time()
+    
+    result_admm4 = lasso_cca(data$X, data$Y, groups = groups)
+    temp2 = Sys.time()
+    
+    
+    lasso_admm_dist4<- evaluate_results(Uhat= result_admm4$U, 
+                                        Vhat = result_admm4$V, 
+                                        example = data, 
+                                        name_method="lasso_group_cv", 
+                                        overlapping_amount=0,
+                                        lambdax= NA,
+                                        lambday = NA, 
+                                        normalize_diagonal=T,
+                                        criterion="prediction",
+                                        r_pca = r_pca, nnz= nnzeros,
+                                        signal_strength= strength_theta)
+    output = rbind(output,  lasso_admm_dist4)
+    
+    
+    
+    t1 = c(t1, temp1 )
+    
+    t2 = c(t2, temp2)
+    
   }, error = function(e) {
     # Print the error message
     cat("Error occurred in alternative methods", ":", conditionMessage(e), "\n")
