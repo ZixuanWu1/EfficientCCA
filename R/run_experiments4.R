@@ -98,7 +98,7 @@ for(strength_theta in c("strong", "medium", "weak")){
   tryCatch({
     temp1 = Sys.time()
     
-    result_admm1 = lasso_cca(data$X, data$Y, lambda = sqrt(log(p + q)/n))
+    result_admm1 = lasso_cca(data$X, data$Y, lambda = sqrt(log(p + q)/n), r = r)
     
     temp2 = Sys.time()
     
@@ -131,7 +131,7 @@ for(strength_theta in c("strong", "medium", "weak")){
   tryCatch({
     temp1 = Sys.time()
     
-    result_admm2 = lasso_cca(data$X, data$Y, lambda_max = .3)
+    result_admm2 = lasso_cca(data$X, data$Y, lambda_max = .3, r = r)
     
     temp2 = Sys.time()
     
@@ -164,7 +164,7 @@ for(strength_theta in c("strong", "medium", "weak")){
   tryCatch({
     temp1 = Sys.time()
     
-    result_admm3 = lasso_cca(data$X, data$Y, lambda = 0.5 * sqrt(log(p + q)/n), groups = groups)
+    result_admm3 = lasso_cca(data$X, data$Y, lambda = 0.5 * sqrt(log(p + q)/n), groups = groups, r = r)
     
     temp2 = Sys.time()
     
@@ -199,7 +199,7 @@ for(strength_theta in c("strong", "medium", "weak")){
   tryCatch({
     temp1 = Sys.time()
     
-    result_admm4 = lasso_cca(data$X, data$Y, groups = groups)
+    result_admm4 = lasso_cca(data$X, data$Y, groups = groups, r = r)
     temp2 = Sys.time()
     
     
