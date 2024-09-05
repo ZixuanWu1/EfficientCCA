@@ -71,47 +71,6 @@ data = generate_example_none_trivial_pca(n, p, q, r_pca = r_pca, nnzeros = nnzer
                                          theta = theta, overlapping_amount = 0,
                                          lambda_pca = 1)
 
-t1 = c(t1, Sys.time())
-result_admm1 = lasso_cca(data$X, data$Y, lambda = 0.5 * sqrt(log(p + q)/n))
-
-
-
-t2 = c(t2, Sys.time())
-
-
-lasso_admm_dist<- evaluate_results(Uhat= result_admm1$U, 
-                                   Vhat = result_admm1$V, 
-                                   example = data, 
-                                   name_method="lasso_theory", 
-                                   overlapping_amount=0,
-                                   lambdax= NA,
-                                   lambday = NA, 
-                                   normalize_diagonal=T,
-                                   criterion="prediction",
-                                   r_pca = r_pca, nnz= nnzeros,
-                                   signal_strength= strength_theta)
-output = rbind(output,  lasso_admm_dist)
-
-
-t1 = c(t1, Sys.time())
-result_admm1 = lasso_cca(data$X, data$Y)
-
-t2 = c(t2, Sys.time())
-
-
-lasso_admm_dist<- evaluate_results(Uhat= result_admm1$U, 
-                                   Vhat = result_admm1$V, 
-                                   example = data, 
-                                   name_method="lasso_cv", 
-                                   overlapping_amount=0,
-                                   lambdax= NA,
-                                   lambday = NA, 
-                                   normalize_diagonal=T,
-                                   criterion="prediction",
-                                   r_pca = r_pca, nnz= nnzeros,
-                                   signal_strength= strength_theta)
-output = rbind(output,  lasso_admm_dist)
-
 
 
 methods <- c("FIT_SAR_BIC", "FIT_SAR_CV", 
@@ -122,10 +81,10 @@ for(i in 1:length(methods)){
   
   
   tryCatch({
-    temp_time = Sys.time()
+    temp1 = Sys.time()
     result <- additional_checks(data$X, data$Y, method.type = methods[i])
-    t1 = c(t1, temp_time)
-    t2 = c(t2, Sys.time())
+    temp2 = Sys.time()
+
     
     result <- evaluate_results(Uhat= result$u, 
                                Vhat = result$v, 
@@ -140,7 +99,8 @@ for(i in 1:length(methods)){
                                signal_strength= strength_theta )
     output = rbind(output,  result)
     
-    
+    t1 = c(t1, temp1)
+    t2 = c(t2, temp2)
     
   }, error = function(e) {
     # Print the error message
@@ -194,6 +154,35 @@ tryCatch({
   cat("Error occurred in alternative methods", ":", conditionMessage(e), "\n")
   # Skip to the next iteration
 })
+
+tryCatch({
+  temp1 = Sys.time()
+  temp2 = Sys.time()
+  
+  zero_u = matrix(0, p, 2)
+  zero_v = matrix(0, q, 2)
+  result <- evaluate_results(Uhat= zero_u,
+                             Vhat = zero_v, 
+                             example = data, 
+                             name_method= "zero_benchmark", 
+                             overlapping_amount=0,
+                             lambdax= NA,
+                             lambday = NA, 
+                             normalize_diagonal=T,
+                             criterion="prediction",
+                             r_pca = r_pca, nnz= nnzeros,
+                             signal_strength= strength_theta )
+  output = rbind(output,  result)
+  
+  t1 = c(t1, temp1)
+  t2 = c(t2, temp2)
+  
+}, error = function(e) {
+  # Print the error message
+  cat("Error occurred in alternative methods", ":", conditionMessage(e), "\n")
+  # Skip to the next iteration
+})
+
 
 }
 
