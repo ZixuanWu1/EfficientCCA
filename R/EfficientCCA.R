@@ -147,10 +147,31 @@ cv_admm_lasso <- function(X, Y, rho = 1, lambda_max = .2, num_lambda = 10, r = 2
       train_indices <- setdiff(1:n, test_indices)
       
       ## Fit lasso model
-      B <- lasso_cca_admm(X[train_indices, ], Y[train_indices, ],  lambda, rho, r, niter, B_init, groups)$result
+      B <- lasso_cca_admm(X[train_indices, ], Y[train_indices, ],  lambda, rho, r, niter, B_init, groups)
       
-      (c(sum((X[test_indices, ] %*% B %*% t(Y[test_indices,]) / length(test_indices) -diag(length(test_indices))  )^2)))
       
+      Sigma_X_root = eigenMapMatMult(eigenMapMatMult(B$eigen1$vectors, diag(sqrt(B$eigen1$values + 1e-10))),  t(B$eigen1$vectors)) 
+      Sigma_Y_root = eigenMapMatMult(eigenMapMatMult(B$eigen2$vectors, diag(sqrt(B$eigen2$values + 1e-10))),  t(B$eigen2$vectors)) 
+      
+      B = B$result
+      C = eigenMapMatMult(eigenMapMatMult(Sigma_X_root, B ),  Sigma_Y_root) 
+      
+      result = svd(C)
+      
+      
+      U_0 = result$u[, 1:r]
+      V_0 = result$v[, 1:r]
+      Lambda_0 = result$d[1:r]
+      
+      if(max(Lambda_0) != 0){
+        U =  eigenMapMatMult(eigenMapMatMult(eigenMapMatMult(B, Sigma_Y_root ),  V_0)  , diag(1/Lambda_0))
+        V =  t(eigenMapMatMult( eigenMapMatMult(eigenMapMatMult( diag(1/Lambda_0), t(U_0)  ),  Sigma_X_root)  ,B))
+        
+        
+        sum( (X[test_indices,] %*% U - Y[test_indices, ] %*% V)^2 )
+      } else{
+        1e10
+      }
       
     }
     
@@ -158,9 +179,7 @@ cv_admm_lasso <- function(X, Y, rho = 1, lambda_max = .2, num_lambda = 10, r = 2
     cv_results <- rbind(cv_results, data.frame(lambda = lambda, mse = mean(unlist(results)),
                                                std = sd(unlist(results)) ))
     # Break the cv process if lambda is so large that B = 0
-    if(all(unlist(results)  == n )){
-      break
-    }
+    
     
   }
   return(cv_results)
