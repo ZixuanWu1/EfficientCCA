@@ -161,9 +161,9 @@ cv_admm_lasso <- function(X, Y, rho = 1, lambda_max = .2, num_lambda = 10, r = 2
       
       U_0 = result$u[, 1:r]
       V_0 = result$v[, 1:r]
-      Lambda_0 = result$d[1:r]
+      Lambda_0 = result$d[1:r] + (1e-10)
       
-      if(max(Lambda_0) != 0){
+      if(max(Lambda_0) != 1e-10){
         U =  eigenMapMatMult(eigenMapMatMult(eigenMapMatMult(B, Sigma_Y_root ),  V_0)  , diag(1/Lambda_0))
         V =  t(eigenMapMatMult( eigenMapMatMult(eigenMapMatMult( diag(1/Lambda_0), t(U_0)  ),  Sigma_X_root)  ,B))
         
