@@ -131,7 +131,7 @@ for(strength_theta in c("strong", "medium", "weak")){
   tryCatch({
     temp1 = Sys.time()
     
-    result_admm2 = lasso_cca(data$X, data$Y, lambda_max = .2, r = r)
+    result_admm2 = lasso_cca(data$X, data$Y, lambda_max = .2, r = r, num_lambda = 20)
     
     temp2 = Sys.time()
     
@@ -199,7 +199,7 @@ for(strength_theta in c("strong", "medium", "weak")){
   tryCatch({
     temp1 = Sys.time()
     
-    result_admm4 = lasso_cca(data$X, data$Y, groups = groups, r = r, lambda_max = .15)
+    result_admm4 = lasso_cca(data$X, data$Y, groups = groups, r = r, lambda_max = .15, num_lambda= 30)
     temp2 = Sys.time()
     
     
