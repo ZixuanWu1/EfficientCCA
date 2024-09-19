@@ -37,7 +37,7 @@ Fantope <- function(X, Y, r = 2){
   sigma0hat <- S * Mask
   
   ag <- sgca_init(A=S, B=sigma0hat, rho=0.5 * sqrt(log( p + q)/n),
-                  K=r,  maxiter=1000, trace=FALSE, fast = F)
+                  K=r,  maxiter=500, trace=FALSE, fast = F)
   ainit <- init_process(ag$Pi, r) 
   test1 <- gca_to_cca(ainit, S, c(p, q))
   
