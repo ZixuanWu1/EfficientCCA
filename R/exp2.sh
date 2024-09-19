@@ -5,7 +5,6 @@
 #SBATCH --array=1-25
 #SBATCH --time=40:00:00
 #SBATCH --partition=cdonnat
-#SBATCH --cpus-per-task=8
 #SBATCH --ntasks=1
 #SBATCH --mem=6G
 #SBATCH --account=pi-cdonnat
