@@ -2,7 +2,7 @@
 
 # Define the values for the variables
 
-n_values="300"
+n_values="400"
 p_values="200"
 s_values="5 10 15"
 r_values="2 3 4 5"
