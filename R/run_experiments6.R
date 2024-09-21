@@ -28,12 +28,15 @@ source('EfficientCCA/R/alternative_methods/SAR.R')
 source('EfficientCCA/R/alternative_methods/Parkhomenko.R')
 source('EfficientCCA/R/alternative_methods/Witten_CrossValidation.R')
 source('EfficientCCA/R/alternative_methods/Waaijenborg.R')
+source('EfficientCCA/R/alternative_methods/Waaijenborg.R')
 
 source("EfficientCCA/R/generate_examples.R")
 source("EfficientCCA/R/evaluate_results.R")
 source("EfficientCCA/R/EfficientCCA.R")
 source("EfficientCCA/R/All_methods.R")
 source("EfficientCCA/R/metrics.R")
+source("EfficientCCA/R/scca_chao.R")
+
 
 
 args <- commandArgs(trailingOnly=TRUE)
