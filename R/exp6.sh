@@ -22,4 +22,4 @@ module load R/4.2.0
 result_file="new_exp_${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
 echo "result file is ${result_file}"
 
-Rscript EfficientCCA/R/run_experiments2.R $SLURM_ARRAY_TASK_ID $result_file $1 $2 $3 $4
+Rscript EfficientCCA/R/run_experiments6.R $SLURM_ARRAY_TASK_ID $result_file $1 $2 $3 $4
