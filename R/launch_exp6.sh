@@ -11,7 +11,7 @@ for n in $n_values; do
 for p in $p_values; do
 for s in $s_values; do
 for r in $r_values; do
-sbatch EfficientCCA/R/exp2.sh "$n" "$p" "$s" "$r"
+sbatch EfficientCCA/R/exp6.sh "$n" "$p" "$s" "$r"
 done
 done
 done
