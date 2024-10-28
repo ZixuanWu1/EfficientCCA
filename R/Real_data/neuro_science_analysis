@@ -1,0 +1,297 @@
+# load("/Users/zixuanwu/Downloads/CCA_project/neuroscience.RData")
+# groups = readRDS("/Users/zixuanwu/Downloads/CCA_project/neurogroup.RData")
+
+library(MASS)
+library(stats)
+library(CVXR)
+library(geigen)
+library(pracma)
+library(tidyverse)
+library(CCA)
+library(VGAM)
+library(matlib)
+library(PMA)
+library(mvtnorm)
+library(glmnet)
+library(caret)
+
+
+source("EfficientCCA/R/GCA/utils.R")
+source("EfficientCCA/R/GCA/gca_to_cca.R")
+source("EfficientCCA/R/GCA/init_process.R")
+source("EfficientCCA/R/GCA/sgca_init.R")
+source("EfficientCCA/R/GCA/sgca_tgd.R")
+source("EfficientCCA/R/GCA/subdistance.R")
+source("EfficientCCA/R/GCA/adaptive_lasso.R")
+
+source('EfficientCCA/R/alternative_methods/SAR.R')
+source('EfficientCCA/R/alternative_methods/Parkhomenko.R')
+source('EfficientCCA/R/alternative_methods/Witten_CrossValidation.R')
+source('EfficientCCA/R/alternative_methods/Waaijenborg.R')
+
+source("EfficientCCA/R/generate_examples.R")
+source("EfficientCCA/R/evaluate_results.R")
+source("EfficientCCA/R/EfficientCCA.R")
+source("EfficientCCA/R/All_methods.R")
+source("EfficientCCA/R/metrics.R")
+
+set.seed(12)
+X = scale(X)
+Y = scale(Y)
+
+p = ncol(X)
+q = ncol(Y)
+
+seeds = 1:30
+set.seed(0)
+nfold = 10
+
+r = 3
+
+# CV error
+
+folds = createFolds(1:nrow(X), 8)
+correlation <-c()
+order = 1:length(folds)
+
+
+groups2 = list()
+for (i in 1:length(groups)){
+  cur = NA
+  for (j in groups[[i]]){
+    for (k in 1:q){
+      cur = rbind(cur, c(j, k))
+    }
+  }
+  groups2[[i]] = cur[2:nrow(cur), ]
+}
+
+groups  = groups2
+
+for (i in  1:length(folds)){
+  index = order[ifelse(i < length(folds), i + 1, (i+1)%%length(folds))]
+  index2 =order[ifelse(i < length(folds) -1, i + 2, (i+2)%%length(folds))]
+  print(c(i, index, index2))
+  
+  X.train = as.matrix(X)[-c(folds[[index]], folds[[index2]]),]
+  Y.train = as.matrix(Y)[-c(folds[[index]],
+                            folds[[index2]]),]
+  n = nrow(X.train)
+  
+  for(lambda in seq(0, .3, length.out = 30)){
+    final =  lasso_cca(X.train, Y.train, lambda =  lambda,  r= r, niter = 2000)
+    
+    
+    correlation <- rbind(
+      correlation,
+      c("CCA_graph_rrr",
+        lambda,
+        i,
+        diag(cov(as.matrix(X)[-c(folds[[index]],
+                                 folds[[index2]]),] %*% final$U,
+                 as.matrix(Y)[-c(folds[[index]],
+                                 folds[[index2]]),] %*%  final$V)),
+        apply(((as.matrix(X)[-c(folds[[index]],
+                                folds[[index2]]),] %*% final$U) -
+                 (as.matrix(Y)[-c(folds[[index]],
+                                  folds[[index2]]),] %*%  final$V))^2, 2, mean),
+        diag(t(as.matrix(X)[folds[[index]],] %*% final$U) %*%
+               (as.matrix(Y)[folds[[index]],] %*%  final$V)),
+        diag(cor(as.matrix(X)[folds[[index]],] %*% final$U, (as.matrix(Y)[folds[[index]],] %*%  final$V))),
+        apply(((as.matrix(X)[folds[[index]],] %*% final$U) -
+                 (as.matrix(Y)[folds[[index]],] %*%  final$V))^2,2,mean),
+        diag(t(as.matrix(X)[folds[[index2]],] %*% final$U) %*%
+               (as.matrix(Y)[folds[[index2]],] %*%  final$V)),
+        diag(cor(as.matrix(X)[folds[[index2]],] %*% final$U, (as.matrix(Y)[folds[[index2]],] %*%  final$V))),
+        apply(((as.matrix(X)[folds[[index2]],] %*% final$U) -
+                 (as.matrix(Y)[folds[[index2]],] %*%  final$V))^2,2,mean)
+      ))
+    
+    
+    final =  lasso_cca(X.train, Y.train, lambda =  lambda,  r= r, niter = 2000, groups = groups)
+    
+    
+    correlation <- rbind(
+      correlation,
+      c("CCA_graph_rrr_group",
+        lambda,
+        i,
+        diag(cov(as.matrix(X)[-c(folds[[index]],
+                                 folds[[index2]]),] %*% final$U,
+                 as.matrix(Y)[-c(folds[[index]],
+                                 folds[[index2]]),] %*%  final$V)),
+        apply(((as.matrix(X)[-c(folds[[index]],
+                                folds[[index2]]),] %*% final$U) -
+                 (as.matrix(Y)[-c(folds[[index]],
+                                  folds[[index2]]),] %*%  final$V))^2, 2, mean),
+        diag(t(as.matrix(X)[folds[[index]],] %*% final$U) %*%
+               (as.matrix(Y)[folds[[index]],] %*%  final$V)),
+        diag(cor(as.matrix(X)[folds[[index]],] %*% final$U, (as.matrix(Y)[folds[[index]],] %*%  final$V))),
+        apply(((as.matrix(X)[folds[[index]],] %*% final$U) -
+                 (as.matrix(Y)[folds[[index]],] %*%  final$V))^2,2,mean),
+        diag(t(as.matrix(X)[folds[[index2]],] %*% final$U) %*%
+               (as.matrix(Y)[folds[[index2]],] %*%  final$V)),
+        diag(cor(as.matrix(X)[folds[[index2]],] %*% final$U, (as.matrix(Y)[folds[[index2]],] %*%  final$V))),
+        apply(((as.matrix(X)[folds[[index2]],] %*% final$U) -
+                 (as.matrix(Y)[folds[[index2]],] %*%  final$V))^2,2,mean)
+      ))
+    
+  }
+  
+  
+  for (method in c("FIT_SAR_CV", "FIT_SAR_BIC", "Witten_Perm",
+                   "Witten.CV", "Waaijenborg-Author", "Waaijenborg-CV",
+                   "SCCA_Parkhomenko")){
+    
+    print(paste0("Starting ", method))
+    tryCatch({
+      test1<-additional_checks(X.train, Y.train,
+                               S=NULL, 
+                               rank=r, kfolds=8, 
+                               method.type = method,
+                               lambdax= 10^seq(-3,1, length.out = 30),
+                               lambday =  10^seq(-3,1, length.out = 30))
+      final = list(U = test1$u, V = test1$v)
+      
+      correlation <- rbind(
+        correlation,
+        c(method,
+          lambda,
+          i,
+          diag(cov(as.matrix(X)[-c(folds[[index]],
+                                   folds[[index2]]),] %*% final$U,
+                   as.matrix(Y)[-c(folds[[index]],
+                                   folds[[index2]]),] %*%  final$V)),
+          apply(((as.matrix(X)[-c(folds[[index]],
+                                  folds[[index2]]),] %*% final$U) -
+                   (as.matrix(Y)[-c(folds[[index]],
+                                    folds[[index2]]),] %*%  final$V))^2, 2, mean),
+          diag(t(as.matrix(X)[folds[[index]],] %*% final$U) %*%
+                 (as.matrix(Y)[folds[[index]],] %*%  final$V)),
+          diag(cor(as.matrix(X)[folds[[index]],] %*% final$U, (as.matrix(Y)[folds[[index]],] %*%  final$V))),
+          apply(((as.matrix(X)[folds[[index]],] %*% final$U) -
+                   (as.matrix(Y)[folds[[index]],] %*%  final$V))^2,2,mean),
+          diag(t(as.matrix(X)[folds[[index2]],] %*% final$U) %*%
+                 (as.matrix(Y)[folds[[index2]],] %*%  final$V)),
+          diag(cor(as.matrix(X)[folds[[index2]],] %*% final$U, (as.matrix(Y)[folds[[index2]],] %*%  final$V))),
+          apply(((as.matrix(X)[folds[[index2]],] %*% final$U) -
+                   (as.matrix(Y)[folds[[index2]],] %*%  final$V))^2,2,mean)
+        ))
+    }, error = function(e) {
+      # Print the error message
+      cat("Error occurred in method", method, ":", conditionMessage(e), "\n")
+      # Skip to the next iteration
+    })
+    
+  }
+  
+  
+  
+  
+  
+  
+  
+  
+}
+correlation_df = data.frame(correlation)
+colnames(correlation_df) = c("method", "lambda", "fold",
+                             "train_cov1",  "train_cov2",    "train_cov3", 
+                             "train_mse1",  "train_mse2",   "train_mse3", 
+                             "test_prod1",  "test_prod2",   "test_prod3", 
+                             "test_cor1",  "test_cor2",          "test_cor3",  
+                             "test_mse1", "test_mse2",  "test_mse3",
+                             "val_prod1",  "val_prod2",     "val_prod3",  
+                             "val_cor1",  "val_cor2",    "val_cor3", 
+                             "val_mse1",  "val_mse2", "val_mse3")
+for (i in 3:ncol(correlation_df)){
+  correlation_df[,i] = as.numeric(correlation_df[,i])
+}
+
+
+summary_correlation = correlation_df %>% 
+  mutate(test_mse = (test_mse1 + test_mse2 + test_mse3 )/3,
+         train_mse = train_mse1 + train_mse2 +train_mse3 ,
+         val_mse =  (val_mse1 + val_mse2 + val_mse3  )/3,
+         test_prod = (test_prod1 + test_prod2 +  test_prod3)/3,
+         test_cor = (test_cor1 + test_cor2  + test_cor3  )/3,
+         train_cov = (train_cov1 + train_cov2 + train_cov3)/3,
+         val_prod = (val_prod1 + val_prod2 + val_prod3)/3,
+         val_cor = (val_cor1 + val_cor2 + val_cor3 )/3) %>%
+  group_by(method, lambda) %>% summarise_all(mean, na.rm=TRUE)%>%
+  arrange((val_mse)) %>% ungroup()
+
+summary_correlation$lambda = as.numeric(summary_correlation$lambda )
+
+summary_correlation$lambda = as.numeric(summary_correlation$lambda )
+ggplot(summary_correlation %>% 
+         filter(method == "CCA_graph_rrr")%>% ungroup())+
+  geom_line(aes(x = as.numeric(lambda), y=test_mse))+
+  geom_point(aes(x = as.numeric(lambda), y=test_mse))+
+  scale_x_log10()
+
+
+lambda_opt1 = summary_correlation$lambda[which.min(summary_correlation$train_mse[which(summary_correlation$method ==  "CCA_graph_rrr")])]
+lambda_opt2 = summary_correlation$lambda[which.min(summary_correlation$train_mse[which(summary_correlation$method ==  "CCA_graph_rrr_group")])]
+
+relevant_correlations = summary_correlation %>% 
+  dplyr::select(method,  val_mse, val_cor, test_mse, test_cor, lambda)
+
+indices = c(1, 5, which(! relevant_correlations$method  %in% c("CCA_graph_rrr", "CCA_graph_rrr_group" )) )
+relevant_correlations[c(1,2), 1] = c("Sparse_CCAR_group", "Sparse_CCAR")
+print(relevant_correlations[indices, c(1,4,5, 6)])
+
+
+
+result1 =  lasso_cca(X, Y, lambda =  0.0414,  r= 3, niter = 2000, groups = groups)
+result2 =  lasso_cca(X, Y, lambda =  0.145,  r= 3, niter = 2000)
+result3 = additional_checks(X, Y,
+                            S=NULL, 
+                            rank=r, kfolds=8, 
+                            method.type = "FIT_SAR_CV",
+                            lambdax= 10^seq(-3,1, length.out = 30),
+                            lambday =  10^seq(-3,1, length.out = 30))
+
+U = result$U
+V = result$V
+
+p <- plot_ly(data = df, 
+             x = ~YV1, 
+             y = ~YV2, 
+             z = ~YV3, 
+             color = ~diet, 
+             symbol = ~gen, 
+             symbols = c("circle",  "cross", "x", "triangle-up", "triangle-down"),  # specify symbols manually
+             type = "scatter3d", 
+             mode = "markers")
+p
+
+# library(reshape2)
+# ynames = colnames(Y) 
+# ylabels = c("Drive", "Funseeking", "Reward Response", "Total", "Distress", "Anhedonia", "Anxious Arousal", "Positive Affect", "Negative Affect")
+# 
+# result =  lasso_cca(X, Y, lambda =  0.0414,  r= 3, niter = 2000, groups = groups)
+# 
+# df_V = data.frame(result$V)
+# colnames(df_V) = paste0("V", 1:3)
+# df_V = data.frame(df_V, question = colnames(Y)) %>%
+#   melt(id = c("question")) %>%
+#   mutate(variable = factor(variable,
+#                            levels = paste0("V", 1:3),
+#                            labels = c(expression(v[1]), expression(v[2]), expression(v[3]))),
+#          question = factor(question, 
+#                            levels = ynames, 
+#                            labels = ylabels))
+# theme_set(theme_bw(base_size = 18))
+# ggplot(df_V) +
+#   geom_bar(aes(value, question, fill = variable), stat = "identity", show.legend = FALSE)+
+#   facet_grid(cols = vars(variable), labeller = label_parsed) +
+#   geom_vline(xintercept = 0, linetype = "dashed") +
+#   labs(y = "Question", x = "Value")+
+#   theme(axis.text.x = element_text(size = 4))+
+#   scale_x_continuous(breaks = c(-1, -0.5, 0, 0.5))+
+#   theme_bw()
+
+
+
+
+
