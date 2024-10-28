@@ -1,0 +1,411 @@
+library(MASS)
+library(stats)
+library(CVXR)
+library(geigen)
+library(pracma)
+library(tidyverse)
+library(CCA)
+library(VGAM)
+library(matlib)
+library(PMA)
+library(mvtnorm)
+library(glmnet)
+library(caret)
+
+
+source("EfficientCCA/R/GCA/utils.R")
+source("EfficientCCA/R/GCA/gca_to_cca.R")
+source("EfficientCCA/R/GCA/init_process.R")
+source("EfficientCCA/R/GCA/sgca_init.R")
+source("EfficientCCA/R/GCA/sgca_tgd.R")
+
+source("EfficientCCA/R/GCA/subdistance.R")
+source("EfficientCCA/R/GCA/adaptive_lasso.R")
+
+source('EfficientCCA/R/alternative_methods/SAR.R')
+source('EfficientCCA/R/alternative_methods/Parkhomenko.R')
+source('EfficientCCA/R/alternative_methods/Witten_CrossValidation.R')
+source('EfficientCCA/R/alternative_methods/Waaijenborg.R')
+
+source("EfficientCCA/R/generate_examples.R")
+source("EfficientCCA/R/evaluate_results.R")
+source("EfficientCCA/R/EfficientCCA.R")
+source("EfficientCCA/R/All_methods.R")
+source("EfficientCCA/R/metrics.R")
+
+
+
+library(CVR)
+data(alcohol)
+X = alcohol$gene
+
+Y = alcohol$meth
+Z = alcohol$disorder
+dim(X)
+dim(Y)
+p = ncol(X)
+
+q = ncol(Y)
+
+
+r = 2
+### CV error
+X = scale(X)
+Y =scale(Y)
+
+
+set.seed(123)
+folds = createFolds(1:nrow(X), 8)
+correlation <-c()
+order = 1:length(folds)
+for (i in  1:length(folds)){
+  index = order[ifelse(i < length(folds), i + 1, (i+1)%%length(folds))]
+  index2 =order[ifelse(i < length(folds) -1, i + 2, (i+2)%%length(folds))]
+  print(c(i, index, index2))
+  
+  X.train = as.matrix(X)[-c(folds[[index]], folds[[index2]]),]
+  Y.train = as.matrix(Y)[-c(folds[[index]],
+                            folds[[index2]]),]
+  n = nrow(X.train)
+  
+  train_ind = setdiff(1:now(X), c(folds[[index]], folds[[index2]]))
+  test_ind = folds[[index]]
+  val_ind = folds[[index2]]
+  
+  
+  for(lambda in seq(.1, .4, length.out = 31)){
+    tryCatch({
+      final =  lasso_cca(X.train, Y.train, lambda =  lambda,  r= r, niter = 2000)
+      
+      
+      
+      correlation <- rbind(
+        correlation,
+        c("CCA_graph_rrr",
+          lambda,
+          i,
+          diag(cov(as.matrix(X)[-c(folds[[index]],
+                                   folds[[index2]]),] %*% final$U,
+                   as.matrix(Y)[-c(folds[[index]],
+                                   folds[[index2]]),] %*%  final$V)),
+          apply(((as.matrix(X)[-c(folds[[index]],
+                                  folds[[index2]]),] %*% final$U) -
+                   (as.matrix(Y)[-c(folds[[index]],
+                                    folds[[index2]]),] %*%  final$V))^2, 2, mean),
+          diag(t(as.matrix(X)[folds[[index]],] %*% final$U) %*%
+                 (as.matrix(Y)[folds[[index]],] %*%  final$V)),
+          diag(cor(as.matrix(X)[folds[[index]],] %*% final$U, (as.matrix(Y)[folds[[index]],] %*%  final$V))),
+          apply(((as.matrix(X)[folds[[index]],] %*% final$U) -
+                   (as.matrix(Y)[folds[[index]],] %*%  final$V))^2,2,mean),
+          diag(t(as.matrix(X)[folds[[index2]],] %*% final$U) %*%
+                 (as.matrix(Y)[folds[[index2]],] %*%  final$V)),
+          diag(cor(as.matrix(X)[folds[[index2]],] %*% final$U, (as.matrix(Y)[folds[[index2]],] %*%  final$V))),
+          apply(((as.matrix(X)[folds[[index2]],] %*% final$U) -
+                   (as.matrix(Y)[folds[[index2]],] %*%  final$V))^2,2,mean)
+        ))
+      
+      
+    }, error = function(e) {
+      # Print the error message
+      cat("Error occurred in method", "CCAR :", conditionMessage(e), "\n")
+      # Skip to the next iteration
+    })
+  }
+  
+  
+  for (method in c("FIT_SAR_CV", "FIT_SAR_BIC", "Witten_Perm",
+                   "Witten.CV", "Waaijenborg-Author", "Waaijenborg-CV")){
+    
+    print(paste0("Starting ", method))
+    tryCatch({
+      test1<-additional_checks(X.train, Y.train,
+                               S=NULL, 
+                               rank=r, kfolds=8, 
+                               method.type = method,
+                               lambdax= 10^seq(-3,1, length.out = 30),
+                               lambday =  10^seq(-3,1, length.out = 30))
+      final = list(U = test1$u, V = test1$v)
+      
+      
+      
+      
+      correlation <- rbind(
+        correlation,
+        c(method,
+          lambda,
+          i,
+          diag(cov(as.matrix(X)[-c(folds[[index]],
+                                   folds[[index2]]),] %*% final$U,
+                   as.matrix(Y)[-c(folds[[index]],
+                                   folds[[index2]]),] %*%  final$V)),
+          apply(((as.matrix(X)[-c(folds[[index]],
+                                  folds[[index2]]),] %*% final$U) -
+                   (as.matrix(Y)[-c(folds[[index]],
+                                    folds[[index2]]),] %*%  final$V))^2, 2, mean),
+          diag(t(as.matrix(X)[folds[[index]],] %*% final$U) %*%
+                 (as.matrix(Y)[folds[[index]],] %*%  final$V)),
+          diag(cor(as.matrix(X)[folds[[index]],] %*% final$U, (as.matrix(Y)[folds[[index]],] %*%  final$V))),
+          apply(((as.matrix(X)[folds[[index]],] %*% final$U) -
+                   (as.matrix(Y)[folds[[index]],] %*%  final$V))^2,2,mean),
+          diag(t(as.matrix(X)[folds[[index2]],] %*% final$U) %*%
+                 (as.matrix(Y)[folds[[index2]],] %*%  final$V)),
+          diag(cor(as.matrix(X)[folds[[index2]],] %*% final$U, (as.matrix(Y)[folds[[index2]],] %*%  final$V))),
+          apply(((as.matrix(X)[folds[[index2]],] %*% final$U) -
+                   (as.matrix(Y)[folds[[index2]],] %*%  final$V))^2,2,mean)
+        ))
+      
+      
+      
+    }, error = function(e) {
+      # Print the error message
+      cat("Error occurred in method", method, ":", conditionMessage(e), "\n")
+      # Skip to the next iteration
+    })
+    
+  }
+  
+  
+  
+  
+  
+  
+  
+}
+correlation_df = data.frame(correlation)
+colnames(correlation_df) = c("method", "lambda", "fold",
+                             "train_cov1",  "train_cov2",   
+                             "train_mse1",  "train_mse2",  
+                             "test_prod1",  "test_prod2",   
+                             "test_cor1",  "test_cor2",       
+                             "test_mse1", "test_mse2", 
+                             "val_prod1",  "val_prod2",    
+                             "val_cor1",  "val_cor2",   
+                             "val_mse1",  "val_mse2")
+for (i in 2:ncol(correlation_df)){
+  correlation_df[,i] = as.numeric(correlation_df[,i])
+}
+
+
+
+summary_correlation = correlation_df %>% 
+  mutate(test_mse = (test_mse1 + test_mse2 )/2,
+         train_mse = train_mse1 + train_mse2 ,
+         val_mse =  (val_mse1 + val_mse2  )/2,
+         test_prod = (test_prod1 + test_prod2 )/2,
+         test_cor = (test_cor1 + test_cor2 )/2,
+         train_cov = (train_cov1 + train_cov2 )/2,
+         val_prod = (val_prod1 + val_prod2)/2,
+         val_cor = (val_cor1 + val_cor2 )/2) %>%
+  group_by(method, lambda) 
+
+summary_correlation = na.omit(summary_correlation)
+summary_correlation[summary_correlation$method != "CCA_graph_rrr", ]$lambda = 0
+summary_correlation = summary_correlation[summary_correlation$lambda <= .25,]
+
+summary_correlation = summary_correlation %>% summarise_all(mean, na.rm=TRUE)%>%
+  arrange((val_mse)) %>% ungroup()
+
+
+
+relevant_correlations = summary_correlation %>% 
+  dplyr::select(method, test_mse, test_cor)
+relevant_correlations 
+indices = c(1, which(relevant_correlations$method != "CCA_graph_rrr") )
+relevant_correlations  = relevant_correlations[indices, ]
+print(relevant_correlations)
+
+
+### Classification
+set.seed(1234)
+folds = createFolds(1:nrow(X), 8)
+methods = c("SparseCCAR", c("FIT_SAR_CV", "FIT_SAR_BIC", "Witten_Perm",
+                            "Witten.CV", "Waaijenborg-Author", "Waaijenborg-CV"
+))
+
+error_disorder = matrix(0, 2, 7)
+count_disorder = matrix(0, 2, 7)
+
+
+
+for (i in 1:length(folds)){
+  test_ind = folds[[i]]
+  train_ind = setdiff(1:nrow(X), test_ind)
+  
+  X.train = X[train_ind, ]
+  Y.train = Y[train_ind, ]
+  
+  results = list()
+  results[["SparseCCAR"]] =  lasso_cca(X.train, Y.train, r= r, lambda = 0.25 * sqrt(3/4) , niter = 2000)
+  for (method in c("FIT_SAR_CV", "FIT_SAR_BIC", "Witten_Perm",
+                   "Witten.CV", "Waaijenborg-Author", "Waaijenborg-CV")){
+    print(paste0("Starting ", method))
+    tryCatch({
+      test1<-additional_checks(X.train, Y.train,
+                               S=NULL, 
+                               rank=r, kfolds=8, 
+                               method.type = method,
+                               lambdax= 10^seq(-3,1, length.out = 30),
+                               lambday =  10^seq(-3,1, length.out = 30))
+      final = list(U = test1$u, V = test1$v)
+      results[[method]] = final
+      
+    }, error = function(e) {
+      # Print the error message
+      cat("Error occurred in method", method, ":", conditionMessage(e), "\n")
+      # Skip to the next iteration
+    })
+    
+  }
+  
+  
+  
+  for(j in 1:7){
+    
+    tryCatch({
+      XU = X %*% results[[methods[j]]]$U
+      YV = Y %*% results[[methods[j]]]$V
+      
+      
+      train_control <- trainControl(method = "cv", number = 10)
+      
+      data = data.frame( X = XU,  Y = YV,  disorder = as.factor(Z[,1]))
+      
+      
+      model1 <- train( disorder ~    X.1 + X.2 ,
+                       data = data[train_ind,], method = "svmLinear3", trControl = train_control)
+      
+      predictions1 <- predict(model1, newdata = data[test_ind, ])
+      
+      error_disorder[1, j] = error_disorder[1, j]  + confusionMatrix(predictions1, data[test_ind, ]$disorder)$overall[1]
+      count_disorder[1, j] = count_disorder[1, j] + 1
+      
+      model1 <- train( disorder ~    Y.1 + Y.2 ,
+                       data = data[train_ind,], method = "rf", trControl = train_control)
+      
+      predictions1 <- predict(model1, newdata = data[test_ind, ])
+      
+      error_disorder[2, j] = error_disorder[2, j]  + confusionMatrix(predictions1, data[test_ind, ]$disorder)$overall[1]
+      count_disorder[2, j] = count_disorder[2, j] + 1
+      
+    }, error = function(e) {
+      # Print the error message
+      cat("Error occurred in", methods[j], conditionMessage(e), "\n")
+      # Skip to the next iteration
+    })
+  }
+  
+}
+
+
+error_disorder / count_disorder
+
+
+## Visualization
+result =  lasso_cca(X, Y, lambda =  .25 * sqrt(3/4),  r= r, niter = 2000)
+
+
+result2 =  additional_checks(X, Y,
+                             S=NULL, 
+                             rank=r, kfolds=8, 
+                             method.type ="Witten_Perm",
+                             lambdax= 10^seq(-3,1, length.out = 30),
+                             lambday =  10^seq(-3,1, length.out = 30))
+XU = X %*% result2$u
+YV = Y %*% result2$v
+colnames(XU) = paste0("XU", 1:2)
+
+
+
+my_colors = c(  "red", "dodgerblue")
+
+
+XU = X %*% result$U
+YV = Y %*% result$V
+cov(cbind(XU, YV))
+colnames(XU) = paste0("XU", 1:2)
+colnames(YV) = paste0("YV", 1:2)
+df = data.frame(XU, YV, AUD = as.factor( Z[, 1]))
+
+p1 = ggplot(df, aes(x=YV1, y=YV2, colour=AUD))+
+  geom_point( size = 3)+
+  scale_color_manual(values = my_colors) +
+  scale_fill_manual(values = my_colors
+  ) +
+  # ggforce::geom_mark_ellipse(aes(fill = diet,
+  #                                color = diet))+
+  xlab(expression(Xu[1]))+
+  ylab(expression(Xu[2]))+
+  labs(colour = "AUD", shape = "Genotype")+
+  theme_bw() + geom_vline(xintercept = 0)
+p1
+XU = X %*% result2$u
+YV = Y %*% result2$v
+cov(cbind(XU, YV))
+colnames(XU) = paste0("XU", 1:2)
+colnames(YV) = paste0("YV", 1:2)
+df = data.frame(XU, YV, AUD = as.factor( Z[, 1]))
+
+p2 = ggplot(df, aes(x=YV1, y=YV2, colour=AUD))+
+  geom_point( size = 3)+
+  scale_color_manual(values = my_colors) +
+  scale_fill_manual(values = my_colors
+  ) +
+  # ggforce::geom_mark_ellipse(aes(fill = diet,
+  #                                color = diet))+
+  xlab(expression(Xu[1]))+
+  ylab(expression(Xu[2]))+
+  labs(colour = "Diet", shape = "AUD")+
+  theme_bw() + geom_abline(intercept = -0.4304/2.2099, slope = -2.6693/2.2099)
+p2
+
+library(ggpubr)
+ggarrange(p1, p2, common.legend = T, legend = "bottom")
+
+library(reshape2)
+ynames = colnames(Y) 
+
+#Visualzation
+df_V = data.frame(result$V)
+colnames(df_V) = c("CD-1", "CD-2")
+df_V["methy"] = colnames(Y)
+df_V = pivot_longer(df_V, cols=-c("methy"))
+
+theme_set(theme_bw(base_size = 18))
+
+
+ggplot(df_V %>% filter(abs(value) > 1e-1) %>% mutate(row = ifelse(name %in% c("CD-4", "CD-5"), 2,1)), aes(x = value, y = reorder(`methy`, value), fill=name)) +
+  geom_bar(stat = "identity", show.legend = FALSE) +
+  facet_wrap(.~name, scale="free_y") +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  labs(y = "DNA methylation", x = "Loading Value") + 
+  labs(fill = "Canonical\nDirection")
+
+
+xnames = colnames(X) 
+
+#Visualzation
+df_U = data.frame(result$U)
+colnames(df_V) = c("CD-1", "CD-2")
+df_U["Gene"] = colnames(X)
+df_U = pivot_longer(df_U, cols=-c("Gene"))
+
+theme_set(theme_bw(base_size = 18))
+
+
+ggplot(df_U %>% filter(abs(value) > 1e-1) %>% mutate(row = ifelse(name %in% c("CD-4", "CD-5"), 2,1)), aes(x = value, y = reorder(`Gene`, value), fill=name)) +
+  geom_bar(stat = "identity", show.legend = FALSE) +
+  facet_wrap(.~name, scale="free_y") +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  labs(y = "Gene expression", x = "Loading Value") + 
+  labs(fill = "Canonical\nDirection")
+
+
+df_U2 = data.frame(value = rowSums(result$U^2))
+df_U2$Gene = colnames(X)
+
+ggplot(df_U2 %>% filter(abs(value) > 0.015), aes(x = value, y = reorder(Gene, value), fill = name)) +
+  geom_bar(stat = "identity", show.legend = FALSE) +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  labs(y = "Hepatic Fatty Acids", x = "Loading Value", fill = "Canonical\nDirection")
+
+
