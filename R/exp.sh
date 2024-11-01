@@ -2,7 +2,7 @@
 #SBATCH --job-name=array
 #SBATCH --output=EfficientCCA/logs/array_missing_%A_%a.out
 #SBATCH --error=EfficientCCA/logs/array_missing_%A_%a.err
-#SBATCH --array=1-25
+#SBATCH --array=1-50
 #SBATCH --time=40:00:00
 #SBATCH --partition=cdonnat
 #SBATCH --ntasks=1
