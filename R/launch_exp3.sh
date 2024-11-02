@@ -4,7 +4,7 @@
 
 n_values="400"
 p_values="200 400 600 800 1000"
-s_values="5 10 15"
+s_values="5 10 15 20 25"
 
 for n in $n_values; do
 for p in $p_values; do
