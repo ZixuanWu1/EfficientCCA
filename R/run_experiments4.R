@@ -34,7 +34,7 @@ source("EfficientCCA/R/evaluate_results.R")
 source("EfficientCCA/R/EfficientCCA.R")
 source("EfficientCCA/R/All_methods.R")
 source("EfficientCCA/R/metrics.R")
-
+source("EfficientCCA/R/EfficientCCA_update.R")
 
 args <- commandArgs(trailingOnly=TRUE)
 seed <- as.numeric(args[1])
