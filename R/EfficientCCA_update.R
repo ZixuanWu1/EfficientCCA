@@ -24,6 +24,14 @@ soft_thresh_group = function(A, lambda){
   A * pmax(1 - lambda / fnorm(A), 0)
 }
 
+soft_thresh2 <- function(A, lambda){
+  if(sum(A^2) == 0){
+    return(A)
+  }
+  result = A * pmax(1 - lambda/(sqrt(sum(A^2))), 0)
+  return(result)
+}
+
 matmul = function(A, B){
   eigenMapMatMult(A, B)
 }
@@ -91,10 +99,9 @@ ecca = function(X, Y, lambdas = 0, groups = NULL, r = 2,
         Z = soft_thresh(Z, lambda / rho)
       }
       else{
-        for(g in unique(groups)){
-          ind = which(groups == g)
-          Z[ind,,drop = F] =  soft_thresh_group(Z[ind,,drop = F], sqrt(length(ind)) * lambda / rho)
-        }
+      for (g in 1:length(groups)){
+        Z[groups[[g]] ] =  soft_thresh2(Z[groups[[g]] ], sqrt(length(groups[[g]]) ) * lambda/rho)
+      }
       }
       
       # Update H
