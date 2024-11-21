@@ -170,7 +170,7 @@ ecca.eval = function(X, Y, lambdas = 0, groups = NULL, r = 2,
   ## Cross validation
       if(parallel){
         ## Parallel cross validation
-        cv = foreach(fold = folds, .export = c("ecca", "matmul", "fnorm", "soft_thresh", "soft_thresh_group"), .packages = c("SMUT", "rARPACK", "crayon")) %dopar% {
+        cv = foreach(fold = folds, .export = c("ecca", "matmul", "fnorm", "soft_thresh", "soft_thresh_group", "soft_thresh2"), .packages = c("SMUT", "rARPACK", "crayon")) %dopar% {
           
           ## Fit lasso model
           ECCA = ecca(X[-fold,,drop = F], Y[-fold,,drop = F], lambdas, groups, r, rho, B0, eps, maxiter, verbose = verbose)
