@@ -132,7 +132,7 @@ for(strength_theta in c("strong", "medium", "weak")){
   tryCatch({
     temp1 = Sys.time()
     
-    result_admm2 = ecca.cv(data$X, data$Y,  r = 2, lambda = seq(0.01, 0.2, length.out = 20))
+    result_admm2 = ecca.cv(data$X, data$Y,  r = 2, lambda = seq(0.01, 0.2, length.out = 20), nfold = 8, parallel = T)
     
     temp2 = Sys.time()
     
@@ -165,7 +165,7 @@ for(strength_theta in c("strong", "medium", "weak")){
   tryCatch({
     temp1 = Sys.time()
     
-    result_admm4 = ecca.cv(data$X, data$Y, groups = groups, r = 2,  lambda = seq(0.01, 0.2, length.out = 20) )
+    result_admm3 = ecca(data$X, data$Y, lambda = 0.5 * sqrt(log(p + q)/n), groups = groups, r = 2)
     
     temp2 = Sys.time()
     
@@ -200,7 +200,7 @@ for(strength_theta in c("strong", "medium", "weak")){
   tryCatch({
     temp1 = Sys.time()
     
-    result_admm4 = lasso_cca(data$X, data$Y, groups = groups, lambda_max = .15, num_lambda= 30)
+    result_admm4 = ecca.cv(data$X, data$Y, groups = groups, r = 2,  lambda = seq(0.01, 0.2, length.out = 20), nfold = 8, parallel = T )
     temp2 = Sys.time()
     
     
